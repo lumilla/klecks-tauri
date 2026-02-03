@@ -343,6 +343,15 @@ export class EaselSelect implements TEaselTool {
                 if (!this.selection || this.mode === 'select' || !this.selectionBounds) {
                     return;
                 }
+                if (
+                    isNaN(transform.x) ||
+                    isNaN(transform.y) ||
+                    isNaN(transform.width) ||
+                    isNaN(transform.height)
+                ) {
+                    //can be provoked by repeatedly x0.5, then dragging a corner
+                    return;
+                }
                 const freeTransformMatrix = freeTransformToMatrix(transform, this.selectionBounds);
                 const matrix = compose(freeTransformMatrix, inverse(this.initialTransformMatrix));
                 this.onFreeTransform(matrix);

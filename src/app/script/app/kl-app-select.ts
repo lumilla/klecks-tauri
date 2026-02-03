@@ -443,6 +443,20 @@ export class KlAppSelect {
                     this.statusOverlay.out(LANG('select-transform-clone-applied'), true);
                 },
                 onScale: (factor) => {
+                    const before = this.easelSelect.getFreeTransformTransformation();
+                    if (!before) {
+                        return;
+                    }
+                    // prevent edge cases (leading to NaN) where width and height are 0.
+                    if (
+                        factor > 1 &&
+                        (factor * before.width === 0 || factor * before.height === 0)
+                    ) {
+                        return;
+                    }
+                    if (factor < 1 && (factor * before.width < 1 || factor * before.height < 1)) {
+                        return;
+                    }
                     this.transformTool.scale(factor);
                     this.propagateTransformationChange();
                     this.easelSelect.setTransform(this.transformTool.getTransform());
