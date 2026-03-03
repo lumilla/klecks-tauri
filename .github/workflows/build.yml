@@ -206,32 +206,26 @@ jobs:
       - name: Create .intunewin package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path intune-output
-
           # Find the setup file (install.cmd)
           .\IntuneWinAppUtil.exe `
             -c intune-source `
             -s install.cmd `
-            -o intune-output `
+            -o . `
             -q
 
           Write-Host "Intune package created:"
-          Get-ChildItem intune-output\
+          Get-ChildItem *.intunewin
 
       - name: Attest .intunewin
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: intune-output/*.intunewin
+          subject-path: '*.intunewin'
 
       - name: Upload Intune package
         uses: actions/upload-artifact@v4
         with:
           name: klecks-intune
-          path: |
-            intune-output/*.intunewin
-            intune-source/detect.ps1
-            intune-source/install.cmd
-            intune-source/uninstall.cmd
+          path: '*.intunewin'
           retention-days: 30
 
   # Create GitHub Release (only on tag push)
