@@ -17,18 +17,21 @@ env:
   RUST_BACKTRACE: 1
 
 jobs:
-  # =============================================================================
   # Build Tauri app for each platform
-  # =============================================================================
   build-tauri:
     permissions:
       contents: read
       attestations: write  # required for actions/attest-build-provenance
       id-token: write      # required for Sigstore OIDC token
     strategy:
+      # Allow the other platform build to finish even if one fails
       fail-fast: false
       matrix:
         include:
+          # Pin to 22.04, not ubuntu-latest: Tauri bundles the runner's glibc, so
+          # building on a newer distro produces binaries that won't run on older
+          # Ubuntu/Debian systems still shipping glibc < 2.35.
+          # I think, anyway.
           - platform: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
             os-name: linux
@@ -51,6 +54,8 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      # Cache the Cargo registry and compiled dependencies between runs.
+      # The workspaces key tells it where our Cargo project and build output live.
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
@@ -71,8 +76,14 @@ jobs:
       - name: Install npm dependencies
         run: npm ci
 
+      # cargo-binstall downloads a prebuilt tauri-cli binary instead of compiling
+      # it from source, saving a fair bit of time per runner. Tauri publishes binaries
+      # for all platforms via GitHub Releases, so binstall can always find one.
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@v1
+
       - name: Install Tauri CLI
-        run: cargo install tauri-cli --version "^2"
+        run: cargo binstall --no-confirm tauri-cli --version "^2"
 
       - name: Generate icons
         run: cargo tauri icon src/app/img/klecks-icon.png
@@ -80,7 +91,7 @@ jobs:
       - name: Build Tauri app
         run: cargo tauri build --target ${{ matrix.target }}
 
-      # --- Collect artifacts ---
+      # Collect artifacts for upload and attestation. The exact files we collect depend on the platform, but we put them all in a common artifacts/ directory to simplify later steps.
       - name: Collect Linux artifacts
         if: matrix.os-name == 'linux'
         run: |
@@ -104,6 +115,8 @@ jobs:
           Write-Host "Windows artifacts:"
           Get-ChildItem artifacts\
 
+      # Publish a signed SLSA provenance attestation for each artifact so
+      # downloaders can verify the binary was produced by this exact workflow. Or something like that, anyway.
       - name: Generate Sigstore attestations
         uses: actions/attest-build-provenance@v2
         with:
@@ -114,11 +127,11 @@ jobs:
         with:
           name: klecks-${{ matrix.os-name }}
           path: artifacts/
+          # 30 days is enough to investigate a failed release; costs nothing beyond
+          # the free tier for public repos.
           retention-days: 30
 
-  # =============================================================================
-  # Package for Microsoft Intune (Windows MSI → .intunewin)
-  # =============================================================================
+  # Package for Microsoft Intune (Windows MSI to .intunewin)
   package-intune:
     needs: build-tauri
     runs-on: windows-latest
@@ -221,9 +234,7 @@ jobs:
             intune-source/uninstall.cmd
           retention-days: 30
 
-  # =============================================================================
   # Create GitHub Release (only on tag push)
-  # =============================================================================
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build-tauri, package-intune]
@@ -244,6 +255,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
+          # Always publish as a draft so artifacts can be reviewed
+          # and the release notes be edited before the release becomes public.
           draft: true
           generate_release_notes: true
           files: |
