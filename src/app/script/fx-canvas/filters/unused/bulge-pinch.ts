@@ -1,9 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { gl } from '../core/gl';
-import { warpShader } from '../shaders/warp-shader';
-import { simpleShader } from '../core/simple-shader';
-import { BB } from '../../bb/bb';
+import { gl } from "../core/gl";
+import { warpShader } from "../shaders/warp-shader";
+import { simpleShader } from "../core/simple-shader";
+import { BB } from "../../bb/bb";
 
 /**
  * @filter         Bulge / Pinch
@@ -14,15 +14,15 @@ import { BB } from '../../bb/bb';
  * @param strength -1 to 1 (-1 is strong pinch, 0 is no effect, 1 is strong bulge)
  */
 export function bulgePinch(centerX, centerY, radius, strength) {
-    gl.bulgePinch =
-        gl.bulgePinch ||
-        warpShader(
-            '\
+  gl.bulgePinch =
+    gl.bulgePinch ||
+    warpShader(
+      "\
         uniform float radius;\
         uniform float strength;\
         uniform vec2 center;\
-    ',
-            '\
+    ",
+      "\
         coord -= center;\
         float distance = length(coord);\
         if (distance < radius) {\
@@ -34,15 +34,15 @@ export function bulgePinch(centerX, centerY, radius, strength) {
             }\
         }\
         coord += center;\
-    ',
-        );
+    ",
+    );
 
-    simpleShader.call(this, gl.bulgePinch, {
-        radius: radius,
-        strength: BB.clamp(strength, -1, 1),
-        center: [centerX, centerY],
-        texSize: [this.width, this.height],
-    });
+  simpleShader.call(this, gl.bulgePinch, {
+    radius: radius,
+    strength: BB.clamp(strength, -1, 1),
+    center: [centerX, centerY],
+    texSize: [this.width, this.height],
+  });
 
-    return this;
+  return this;
 }

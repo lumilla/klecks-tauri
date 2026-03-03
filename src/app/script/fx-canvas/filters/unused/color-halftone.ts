@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { gl } from '../core/gl';
-import { Shader } from '../core/shader';
-import { simpleShader } from '../core/simple-shader';
+import { gl } from "../core/gl";
+import { Shader } from "../core/shader";
+import { simpleShader } from "../core/simple-shader";
 
 /**
  * @filter        Color Halftone
@@ -15,11 +15,11 @@ import { simpleShader } from '../core/simple-shader';
  * @param size    The diameter of a dot in pixels.
  */
 export function colorHalftone(centerX, centerY, angle, size) {
-    gl.colorHalftone =
-        gl.colorHalftone ||
-        new Shader(
-            null,
-            '\
+  gl.colorHalftone =
+    gl.colorHalftone ||
+    new Shader(
+      null,
+      "\
         uniform sampler2D texture;\
         uniform vec2 center;\
         uniform float angle;\
@@ -46,16 +46,16 @@ export function colorHalftone(centerX, centerY, angle, size) {
             k = clamp(k * 10.0 - 5.0 + pattern(angle + 0.78539), 0.0, 1.0);\
             gl_FragColor = vec4(1.0 - cmy - k, color.a);\
         }\
-    ',
-            'colorHalftone',
-        );
+    ",
+      "colorHalftone",
+    );
 
-    simpleShader.call(this, gl.colorHalftone, {
-        center: [centerX, centerY],
-        angle: angle,
-        scale: Math.PI / size,
-        texSize: [this.width, this.height],
-    });
+  simpleShader.call(this, gl.colorHalftone, {
+    center: [centerX, centerY],
+    angle: angle,
+    scale: Math.PI / size,
+    texSize: [this.width, this.height],
+  });
 
-    return this;
+  return this;
 }

@@ -7,10 +7,13 @@
  * @param deltaY vertical distance from pointerdown
  * @param isRightButton
  */
-export function calcSliderFalloffFactor(deltaY: number, isRightButton: boolean): number {
-    let result = Math.min(10, 1 + Math.pow(Math.floor(deltaY / 50), 2));
-    if (isRightButton) {
-        result *= 2;
-    }
-    return 1 / result;
+export function calcSliderFalloffFactor(
+  deltaY: number,
+  isRightButton: boolean,
+): number {
+  let result = Math.min(10, 1 + Math.pow(Math.floor(deltaY / 50), 2));
+  if (isRightButton) {
+    result *= 2;
+  }
+  return 1 / result;
 }

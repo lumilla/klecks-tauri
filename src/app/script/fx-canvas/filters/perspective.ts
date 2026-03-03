@@ -1,15 +1,15 @@
-import { getInverse, getSquareToQuad, multiply } from '../math/matrix';
-import { TFxCanvas } from '../fx-canvas-types';
+import { getInverse, getSquareToQuad, multiply } from "../math/matrix";
+import { TFxCanvas } from "../fx-canvas-types";
 
 export type TRectanglePoints = [
-    number,
-    number, // point a
-    number,
-    number, // point b
-    number,
-    number, // point c
-    number,
-    number, // point d
+  number,
+  number, // point a
+  number,
+  number, // point b
+  number,
+  number, // point c
+  number,
+  number, // point d
 ];
 
 /**
@@ -24,14 +24,14 @@ export type TRectanglePoints = [
  *               like the other argument.
  */
 export type TFilterPerspective = (
-    this: TFxCanvas,
-    before: TRectanglePoints,
-    after: TRectanglePoints,
+  this: TFxCanvas,
+  before: TRectanglePoints,
+  after: TRectanglePoints,
 ) => TFxCanvas;
 
 export const perspective: TFilterPerspective = function (before, after) {
-    const a = getSquareToQuad(...after);
-    const b = getSquareToQuad(...before);
-    const c = multiply(getInverse(a), b);
-    return this.matrixWarp(c);
+  const a = getSquareToQuad(...after);
+  const b = getSquareToQuad(...before);
+  const c = multiply(getInverse(a), b);
+  return this.matrixWarp(c);
 };

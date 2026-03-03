@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { gl } from '../core/gl';
-import { Shader } from '../core/shader';
-import { simpleShader } from '../core/simple-shader';
+import { gl } from "../core/gl";
+import { Shader } from "../core/shader";
+import { simpleShader } from "../core/simple-shader";
 
 /**
  * @filter         Denoise
@@ -13,12 +13,12 @@ import { simpleShader } from '../core/simple-shader';
  *                 give the original image, but ideal values are usually around 10-20.
  */
 export function denoise(exponent) {
-    // Do a 9x9 bilateral box filter
-    gl.denoise =
-        gl.denoise ||
-        new Shader(
-            null,
-            '\
+  // Do a 9x9 bilateral box filter
+  gl.denoise =
+    gl.denoise ||
+    new Shader(
+      null,
+      "\
         uniform sampler2D texture;\
         uniform float exponent;\
         uniform float strength;\
@@ -39,17 +39,17 @@ export function denoise(exponent) {
             }\
             gl_FragColor = color / total;\
         }\
-    ',
-            'denoise',
-        );
+    ",
+      "denoise",
+    );
 
-    // Perform two iterations for stronger results
-    for (let i = 0; i < 2; i++) {
-        simpleShader.call(this, gl.denoise, {
-            exponent: Math.max(0, exponent),
-            texSize: [this.width, this.height],
-        });
-    }
+  // Perform two iterations for stronger results
+  for (let i = 0; i < 2; i++) {
+    simpleShader.call(this, gl.denoise, {
+      exponent: Math.max(0, exponent),
+      texSize: [this.width, this.height],
+    });
+  }
 
-    return this;
+  return this;
 }

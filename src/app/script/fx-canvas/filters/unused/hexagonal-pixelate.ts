@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { gl } from '../core/gl';
-import { Shader } from '../core/shader';
-import { simpleShader } from '../core/simple-shader';
+import { gl } from "../core/gl";
+import { Shader } from "../core/shader";
+import { simpleShader } from "../core/simple-shader";
 
 /**
  * @filter        Hexagonal Pixelate
@@ -13,11 +13,11 @@ import { simpleShader } from '../core/simple-shader';
  * @param scale   The width of an individual tile, in pixels.
  */
 export function hexagonalPixelate(centerX, centerY, scale) {
-    gl.hexagonalPixelate =
-        gl.hexagonalPixelate ||
-        new Shader(
-            null,
-            '\
+  gl.hexagonalPixelate =
+    gl.hexagonalPixelate ||
+    new Shader(
+      null,
+      "\
         uniform sampler2D texture;\
         uniform vec2 center;\
         uniform float scale;\
@@ -57,15 +57,15 @@ export function hexagonalPixelate(centerX, centerY, scale) {
             choice *= scale / texSize;\
             gl_FragColor = texture2D(texture, choice + center / texSize);\
         }\
-    ',
-            'hexagonalPixelate',
-        );
+    ",
+      "hexagonalPixelate",
+    );
 
-    simpleShader.call(this, gl.hexagonalPixelate, {
-        center: [centerX, centerY],
-        scale: scale,
-        texSize: [this.width, this.height],
-    });
+  simpleShader.call(this, gl.hexagonalPixelate, {
+    center: [centerX, centerY],
+    scale: scale,
+    texSize: [this.width, this.height],
+  });
 
-    return this;
+  return this;
 }

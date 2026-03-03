@@ -1,9 +1,9 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-nocheck
-import { gl } from '../core/gl';
-import { Shader } from '../core/shader';
-import { simpleShader } from '../core/simple-shader';
-import { BB } from '../../bb/bb';
+import { gl } from "../core/gl";
+import { Shader } from "../core/shader";
+import { simpleShader } from "../core/simple-shader";
+import { BB } from "../../bb/bb";
 
 /**
  * @filter         Sepia
@@ -11,11 +11,11 @@ import { BB } from '../../bb/bb';
  * @param amount   0 to 1 (0 for no effect, 1 for full sepia coloring)
  */
 export function sepia(amount) {
-    gl.sepia =
-        gl.sepia ||
-        new Shader(
-            null,
-            '\
+  gl.sepia =
+    gl.sepia ||
+    new Shader(
+      null,
+      "\
         uniform sampler2D texture;\
         uniform float amount;\
         varying vec2 texCoord;\
@@ -31,13 +31,13 @@ export function sepia(amount) {
             \
             gl_FragColor = color;\
         }\
-    ',
-            'sepia',
-        );
+    ",
+      "sepia",
+    );
 
-    simpleShader.call(this, gl.sepia, {
-        amount: BB.clamp(amount, 0, 1),
-    });
+  simpleShader.call(this, gl.sepia, {
+    amount: BB.clamp(amount, 0, 1),
+  });
 
-    return this;
+  return this;
 }

@@ -3,7 +3,7 @@ name: Build Klecks Tauri App
 on:
   push:
     branches: [main]
-    tags: ['v*']
+    tags: ["v*"]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -13,7 +13,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
-  NODE_VERSION: '20'
+  NODE_VERSION: "20"
   RUST_BACKTRACE: 1
 
 jobs:
@@ -21,8 +21,8 @@ jobs:
   build-tauri:
     permissions:
       contents: read
-      attestations: write  # required for actions/attest-build-provenance
-      id-token: write      # required for Sigstore OIDC token
+      attestations: write # required for actions/attest-build-provenance
+      id-token: write # required for Sigstore OIDC token
     strategy:
       # Allow the other platform build to finish even if one fails
       fail-fast: false
@@ -219,13 +219,13 @@ jobs:
       - name: Attest .intunewin
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: '*.intunewin'
+          subject-path: "*.intunewin"
 
       - name: Upload Intune package
         uses: actions/upload-artifact@v4
         with:
           name: klecks-intune
-          path: '*.intunewin'
+          path: "*.intunewin"
           retention-days: 30
 
   # Create GitHub Release (only on tag push)

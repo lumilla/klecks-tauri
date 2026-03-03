@@ -1,7 +1,7 @@
-import { gl } from '../core/gl';
-import { FxShader } from '../core/fx-shader';
-import { simpleShader } from '../core/simple-shader';
-import { TFxCanvas, TWrappedTexture } from '../fx-canvas-types';
+import { gl } from "../core/gl";
+import { FxShader } from "../core/fx-shader";
+import { simpleShader } from "../core/simple-shader";
+import { TFxCanvas, TWrappedTexture } from "../fx-canvas-types";
 
 /**
  * Mask
@@ -11,28 +11,32 @@ import { TFxCanvas, TWrappedTexture } from '../fx-canvas-types';
  * @param premultiplyOriginal multiply the original by original's alpha channel. False is default.
  */
 export type TFilterMask = (
-    this: TFxCanvas,
-    maskTexture: TWrappedTexture,
-    originalTexture?: TWrappedTexture,
-    premultiplyOriginal?: boolean,
+  this: TFxCanvas,
+  maskTexture: TWrappedTexture,
+  originalTexture?: TWrappedTexture,
+  premultiplyOriginal?: boolean,
 ) => TFxCanvas;
 
-export const mask: TFilterMask = function (maskTexture, originalTexture, premultiplyOriginal) {
-    maskTexture._.use(1);
+export const mask: TFilterMask = function (
+  maskTexture,
+  originalTexture,
+  premultiplyOriginal,
+) {
+  maskTexture._.use(1);
 
-    if (originalTexture) {
-        originalTexture._.use(2);
-    } else {
-        // should be faster than introducing a conditional in the shader
-        this._.extraTexture.use(2);
-        this._.extraTexture.initFromBytes(1, 1, [0, 0, 0, 0]);
-    }
+  if (originalTexture) {
+    originalTexture._.use(2);
+  } else {
+    // should be faster than introducing a conditional in the shader
+    this._.extraTexture.use(2);
+    this._.extraTexture.initFromBytes(1, 1, [0, 0, 0, 0]);
+  }
 
-    gl.mask =
-        gl.mask ||
-        new FxShader(
-            null,
-            `
+  gl.mask =
+    gl.mask ||
+    new FxShader(
+      null,
+      `
         uniform sampler2D texture;
         uniform sampler2D mask;
         uniform sampler2D original;
@@ -49,15 +53,17 @@ export const mask: TFilterMask = function (maskTexture, originalTexture, premult
             gl_FragColor = mix(originalCol, filteredCol, maskStrength);
         }
         `,
-            'mask',
-        );
+      "mask",
+    );
 
-    gl.mask.textures({
-        mask: 1,
-        original: 2,
-    });
+  gl.mask.textures({
+    mask: 1,
+    original: 2,
+  });
 
-    simpleShader.call(this, gl.mask, { premultiplyOriginal: premultiplyOriginal ? 1 : 0 });
+  simpleShader.call(this, gl.mask, {
+    premultiplyOriginal: premultiplyOriginal ? 1 : 0,
+  });
 
-    return this;
+  return this;
 };

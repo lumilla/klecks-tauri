@@ -1,8 +1,8 @@
-import { splineInterpolate } from '../math/spline-interpolate';
-import { gl } from '../core/gl';
-import { FxShader } from '../core/fx-shader';
-import { simpleShader } from '../core/simple-shader';
-import { TFxCanvas } from '../fx-canvas-types';
+import { splineInterpolate } from "../math/spline-interpolate";
+import { gl } from "../core/gl";
+import { FxShader } from "../core/fx-shader";
+import { simpleShader } from "../core/simple-shader";
+import { TFxCanvas } from "../fx-canvas-types";
 
 /**
  * Curves
@@ -22,29 +22,29 @@ import { TFxCanvas } from '../fx-canvas-types';
  *              channel (just like for red).
  */
 export type TFilterCurves = (
-    this: TFxCanvas,
-    red: [number, number][],
-    green: [number, number][],
-    blue: [number, number][],
+  this: TFxCanvas,
+  red: [number, number][],
+  green: [number, number][],
+  blue: [number, number][],
 ) => TFxCanvas;
 
 export const curves: TFilterCurves = function (red, green, blue) {
-    // Create the ramp texture
-    const redRamp = splineInterpolate(red);
-    const greenRamp = splineInterpolate(green);
-    const blueRamp = splineInterpolate(blue);
-    const array: number[] = [];
-    for (let i = 0; i < 256; i++) {
-        array.splice(array.length, 0, redRamp[i], greenRamp[i], blueRamp[i], 255);
-    }
-    this._.extraTexture.initFromBytes(256, 1, array);
-    this._.extraTexture.use(1);
+  // Create the ramp texture
+  const redRamp = splineInterpolate(red);
+  const greenRamp = splineInterpolate(green);
+  const blueRamp = splineInterpolate(blue);
+  const array: number[] = [];
+  for (let i = 0; i < 256; i++) {
+    array.splice(array.length, 0, redRamp[i], greenRamp[i], blueRamp[i], 255);
+  }
+  this._.extraTexture.initFromBytes(256, 1, array);
+  this._.extraTexture.use(1);
 
-    gl.curves =
-        gl.curves ||
-        new FxShader(
-            null,
-            '\
+  gl.curves =
+    gl.curves ||
+    new FxShader(
+      null,
+      "\
         uniform sampler2D texture;\
         uniform sampler2D map;\
         varying vec2 texCoord;\
@@ -55,14 +55,14 @@ export const curves: TFilterCurves = function (red, green, blue) {
             color.b = texture2D(map, vec2(color.b)).b;\
             gl_FragColor = color;\
         }\
-    ',
-            'curves',
-        );
+    ",
+      "curves",
+    );
 
-    gl.curves.textures({
-        map: 1,
-    });
-    simpleShader.call(this, gl.curves, {});
+  gl.curves.textures({
+    map: 1,
+  });
+  simpleShader.call(this, gl.curves, {});
 
-    return this;
+  return this;
 };

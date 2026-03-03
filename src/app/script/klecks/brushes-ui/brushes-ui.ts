@@ -1,11 +1,11 @@
-import { penBrushUi } from './pen-brush-ui';
-import { blendBrushUi } from './blend-brush-ui';
-import { sketchyBrushUi } from './sketchy-brush-ui';
-import { pixelBrushUi } from './pixel-brush-ui';
-import { eraserBrushUi } from './eraser-brush-ui';
-import { smudgeBrushUi } from './smudge-brush-ui';
-import { chemyBrushUi } from './chemy-brush-ui';
-import { TBrushUi } from '../kl-types';
+import { penBrushUi } from "./pen-brush-ui";
+import { blendBrushUi } from "./blend-brush-ui";
+import { sketchyBrushUi } from "./sketchy-brush-ui";
+import { pixelBrushUi } from "./pixel-brush-ui";
+import { eraserBrushUi } from "./eraser-brush-ui";
+import { smudgeBrushUi } from "./smudge-brush-ui";
+import { chemyBrushUi } from "./chemy-brush-ui";
+import { TBrushUi } from "../kl-types";
 
 /**
  * UI for brushes.
@@ -14,13 +14,13 @@ import { TBrushUi } from '../kl-types';
  */
 
 export const BRUSHES_UI: {
-    [key: string]: TBrushUi<any>;
+  [key: string]: TBrushUi<any>;
 } = {
-    penBrush: penBrushUi,
-    blendBrush: blendBrushUi,
-    sketchyBrush: sketchyBrushUi,
-    pixelBrush: pixelBrushUi,
-    chemyBrush: chemyBrushUi,
-    smudgeBrush: smudgeBrushUi,
-    eraserBrush: eraserBrushUi,
+  penBrush: penBrushUi,
+  blendBrush: blendBrushUi,
+  sketchyBrush: sketchyBrushUi,
+  pixelBrush: pixelBrushUi,
+  chemyBrush: chemyBrushUi,
+  smudgeBrush: smudgeBrushUi,
+  eraserBrush: eraserBrushUi,
 };
