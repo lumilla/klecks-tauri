@@ -78,9 +78,9 @@ jobs:
 
       # cargo-binstall downloads a prebuilt tauri-cli binary instead of compiling
       # it from source, saving a fair bit of time per runner. Tauri publishes binaries
-      # for all platforms via GitHub Releases, so binstall can always find one.
+      # for all platforms via GitHub Releases, so binstall should always find one.
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@v1
+        uses: cargo-bins/cargo-binstall@main
 
       - name: Install Tauri CLI
         run: cargo binstall --no-confirm tauri-cli --version "^2"
