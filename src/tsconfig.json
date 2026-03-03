@@ -6,12 +6,10 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["vite/client"]
   },
   "$schema": "https://json.schemastore.org/tsconfig",
   "display": "Recommended",
-  "exclude": [
-    "app/script/fx-canvas/filters/unused",
-    "languages",
-  ]
+  "exclude": ["app/script/fx-canvas/filters/unused", "languages"]
 }

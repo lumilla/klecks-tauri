@@ -11,7 +11,7 @@ import { RGB } from '../../../bb/color/color';
 import { getSharedFx } from '../../../fx-canvas/shared-fx';
 import { c } from '../../../bb/base/c';
 import { KlHistory } from '../../history/kl-history';
-import copyImg from 'url:/src/app/img/ui/copy.svg';
+import copyImg from '/src/app/img/ui/copy.svg';
 import { createImage } from '../../../bb/base/ui';
 
 export type TEditUiParams = {

@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.bitbof.klecks",
   "build": {
-    "beforeBuildCommand": "npm run build:tauri",
-    "beforeDevCommand": "npm run start",
+    "beforeBuildCommand": "npm run build",
+    "beforeDevCommand": "npm run dev",
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:1234"
+    "devUrl": "http://localhost:1420"
   },
   "app": {
     "windows": [
@@ -60,10 +60,7 @@
   "plugins": {
     "dialog": null,
     "fs": {
-      "scope": {
-        "allow": ["**"],
-        "deny": []
-      }
+      "requireLiteralLeadingDot": false
     },
     "shell": {
       "open": true
