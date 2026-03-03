@@ -16,6 +16,7 @@ import { showRecoveryManagerPanel } from '../modals/recovery-manager-panel/show-
 import * as classes from './file-ui.module.scss';
 import { BrowserStorageHeaderUi } from '../components/browser-storage-header-ui';
 import { css } from '../../../bb/base/base';
+import { isTauri, tauriOpenFile } from '../../../tauri/tauri-bridge';
 
 const LS_SHOW_SAVE_DIALOG = 'kl-save-dialog';
 
@@ -120,7 +121,25 @@ export class FileUi {
                 custom: {
                     tabIndex: '-1',
                 },
-                onClick: () => this.importInput!.click(),
+                onClick: () => {
+                    // If running as Tauri desktop app, use native file picker via bridge
+                    if (isTauri()) {
+                        tauriOpenFile().then((result) => {
+                            if (result) {
+                                const file = new File(
+                                    [result.data],
+                                    result.name,
+                                    { type: result.name.endsWith('.psd') ? 'image/vnd.adobe.photoshop' : 'image/png' },
+                                );
+                                const dt = new DataTransfer();
+                                dt.items.add(file);
+                                p.onFileSelect(dt.files, 'default');
+                            }
+                        });
+                        return;
+                    }
+                    this.importInput!.click();
+                },
             });
             this.importInput = BB.el({
                 tagName: 'input',
@@ -313,7 +332,7 @@ export class FileUi {
             });
 
             BB.append(this.rootEl, [
-                saveNote,
+                ...(!isTauri() ? [saveNote] : []),
                 newButton,
                 importButton,
                 BB.el({ css: { clear: 'both' } }),
@@ -323,8 +342,8 @@ export class FileUi {
                 browserStorageFallbackEl,
                 createSpacer(),
                 recoveryWrapper,
-                uploadImgurButton,
-                BB.canShareFiles() ? shareButton : undefined,
+                ...(!isTauri() ? [uploadImgurButton] : []),
+                ...(!isTauri() && BB.canShareFiles() ? [shareButton] : []),
                 BB.el({ css: { clear: 'both' } }),
             ]);
         };

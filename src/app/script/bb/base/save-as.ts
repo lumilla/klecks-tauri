@@ -1,3 +1,5 @@
+import { isTauri, tauriSaveFile } from '../../tauri/tauri-bridge';
+
 type TFilePickerAcceptType = {
     description?: string;
     accept: Record<string, string[]>;
@@ -55,6 +57,12 @@ export async function saveAs(
     fileName: string,
     showDialog: boolean = false,
 ): Promise<void> {
+    // Use native Tauri save dialog when running as desktop app
+    if (isTauri()) {
+        await tauriSaveFile(blob, fileName);
+        return;
+    }
+
     if (showDialog && (await saveViaFilePicker(blob, fileName))) {
         return;
     }

@@ -1,0 +1,252 @@
+name: Build Klecks Tauri App
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  NODE_VERSION: '20'
+  RUST_BACKTRACE: 1
+
+jobs:
+  # =============================================================================
+  # Build Tauri app for each platform
+  # =============================================================================
+  build-tauri:
+    permissions:
+      contents: read
+      attestations: write  # required for actions/attest-build-provenance
+      id-token: write      # required for Sigstore OIDC token
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            os-name: linux
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            os-name: windows
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install Linux dependencies
+        if: matrix.os-name == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+
+      - name: Generate icons
+        run: cargo tauri icon src/app/img/klecks-icon.png
+
+      - name: Build Tauri app
+        run: cargo tauri build --target ${{ matrix.target }}
+
+      # --- Collect artifacts ---
+      - name: Collect Linux artifacts
+        if: matrix.os-name == 'linux'
+        run: |
+          mkdir -p artifacts
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb artifacts/ 2>/dev/null || true
+          cp src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage artifacts/ 2>/dev/null || true
+          echo "Linux artifacts:"
+          ls -la artifacts/
+
+      - name: Collect Windows artifacts
+        if: matrix.os-name == 'windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path artifacts
+          $msi = Get-ChildItem "src-tauri\target\${{ matrix.target }}\release\bundle\msi\*.msi" -ErrorAction SilentlyContinue
+          if (-not $msi) {
+            Write-Error "MSI not found - build may have failed to produce an installer."
+            exit 1
+          }
+          Copy-Item $msi.FullName -Destination artifacts\
+          Write-Host "Windows artifacts:"
+          Get-ChildItem artifacts\
+
+      - name: Generate Sigstore attestations
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: artifacts/*
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: klecks-${{ matrix.os-name }}
+          path: artifacts/
+          retention-days: 30
+
+  # =============================================================================
+  # Package for Microsoft Intune (Windows MSI → .intunewin)
+  # =============================================================================
+  package-intune:
+    needs: build-tauri
+    runs-on: windows-latest
+    permissions:
+      contents: read
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: klecks-windows
+          path: artifacts/
+
+      - name: Verify MSI exists
+        shell: pwsh
+        run: |
+          $msi = Get-ChildItem artifacts\*.msi -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $msi) {
+            Write-Error "No MSI found in windows artifacts, something went wrong with the build step. Cannot proceed with Intune packaging."
+            exit 1
+          }
+          Write-Host "Found MSI: $($msi.FullName)"
+
+      - name: Download Microsoft Win32 Content Prep Tool
+        shell: pwsh
+        run: |
+          $url = "https://github.com/microsoft/Microsoft-Win32-Content-Prep-Tool/raw/master/IntuneWinAppUtil.exe"
+          Invoke-WebRequest -Uri $url -OutFile IntuneWinAppUtil.exe
+
+      - name: Prepare Intune package source
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path intune-source
+
+          $msi = Get-ChildItem artifacts\*.msi | Select-Object -First 1
+          Copy-Item $msi.FullName -Destination intune-source\
+          $installerName = $msi.Name
+
+          # Silent install via msiexec
+          @"
+          @echo off
+          msiexec /i "%~dp0$installerName" /qn /norestart
+          exit /b %ERRORLEVEL%
+          "@ | Set-Content -Path intune-source\install.cmd
+
+          # Silent uninstall via msiexec product code
+          @"
+          @echo off
+          for /f "tokens=*" %%i in ('wmic product where "Name='Klecks'" get IdentifyingNumber /value ^| find "="') do set %%i
+          if defined IdentifyingNumber (
+            msiexec /x %IdentifyingNumber% /qn /norestart
+          ) else (
+            msiexec /x "%~dp0$installerName" /qn /norestart
+          )
+          exit /b 0
+          "@ | Set-Content -Path intune-source\uninstall.cmd
+
+          # Intune detection: registry key written by the MSI
+          @"
+          `$keyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+          `$app = Get-ChildItem `$keyPath |`n            Get-ItemProperty |`n            Where-Object { `$_.DisplayName -like 'Klecks*' }
+          if (`$app) { Write-Host "Detected: `$(`$app.DisplayName) `$(`$app.DisplayVersion)"; exit 0 }
+          exit 1
+          "@ | Set-Content -Path intune-source\detect.ps1
+
+          Write-Host "Intune source contents:"
+          Get-ChildItem intune-source\
+
+      - name: Create .intunewin package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path intune-output
+
+          # Find the setup file (install.cmd)
+          .\IntuneWinAppUtil.exe `
+            -c intune-source `
+            -s install.cmd `
+            -o intune-output `
+            -q
+
+          Write-Host "Intune package created:"
+          Get-ChildItem intune-output\
+
+      - name: Attest .intunewin
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: intune-output/*.intunewin
+
+      - name: Upload Intune package
+        uses: actions/upload-artifact@v4
+        with:
+          name: klecks-intune
+          path: |
+            intune-output/*.intunewin
+            intune-source/detect.ps1
+            intune-source/install.cmd
+            intune-source/uninstall.cmd
+          retention-days: 30
+
+  # =============================================================================
+  # Create GitHub Release (only on tag push)
+  # =============================================================================
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-tauri, package-intune]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts/
+
+      - name: List all artifacts
+        run: find all-artifacts/ -type f | sort
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            all-artifacts/klecks-windows/*
+            all-artifacts/klecks-linux/*
+            all-artifacts/klecks-intune/*

@@ -12,15 +12,23 @@
   "scripts": {
     "start": "parcel serve src/index.html --no-cache",
     "build": "parcel build src/index.html",
+    "build:tauri": "npm run lang:build && parcel build src/index.html --no-source-maps",
     "build:embed": "parcel build src/embed.ts",
     "build:help": "parcel build src/help.html --public-url .",
     "lang:add": "node src/languages/generate.js add",
     "lang:sync": "node src/languages/generate.js sync",
-    "lang:build": "node src/languages/generate.js build"
+    "lang:build": "node src/languages/generate.js build",
+    "tauri": "cargo tauri",
+    "tauri:dev": "cargo tauri dev",
+    "tauri:build": "cargo tauri build"
   },
   "dependencies": {
     "@parcel/transformer-glsl": "2.16.4",
     "@parcel/transformer-sass": "2.16.4",
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.0.0",
+    "@tauri-apps/plugin-fs": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0",
     "ag-psd": "28.3.1",
     "buffer": "6.0.3",
     "js-beautify": "1.15.4",

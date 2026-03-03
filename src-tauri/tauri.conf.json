@@ -1,0 +1,72 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui-org/nicegui/main/nicegui/json_schemas/tauri-conf-v2.json",
+  "productName": "Klecks",
+  "version": "0.1.0",
+  "identifier": "com.bitbof.klecks",
+  "build": {
+    "beforeBuildCommand": "npm run build:tauri",
+    "beforeDevCommand": "npm run start",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1234"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Klecks",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "deb", "appimage"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "resources": [],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "wix": {
+        "language": "en-US"
+      }
+    },
+    "fileAssociations": [
+      {
+        "ext": ["png"],
+        "mimeType": "image/png",
+        "name": "PNG Image"
+      },
+      {
+        "ext": ["psd"],
+        "mimeType": "image/vnd.adobe.photoshop",
+        "name": "Photoshop Document"
+      }
+    ]
+  },
+  "plugins": {
+    "dialog": null,
+    "fs": {
+      "scope": {
+        "allow": ["**"],
+        "deny": []
+      }
+    },
+    "shell": {
+      "open": true
+    }
+  }
+}

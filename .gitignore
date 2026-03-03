@@ -2,4 +2,6 @@ node_modules
 .parcel-cache
 dist
 .idea
+src-tauri/target
+src-tauri/gen
 src/app/languages
