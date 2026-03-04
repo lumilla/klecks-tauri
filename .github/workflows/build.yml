@@ -171,34 +171,11 @@ jobs:
 
           $msi = Get-ChildItem artifacts\*.msi | Select-Object -First 1
           Copy-Item $msi.FullName -Destination intune-source\
-          $installerName = $msi.Name
 
-          # Silent install via msiexec
-          @"
-          @echo off
-          msiexec /i "%~dp0$installerName" /qn /norestart
-          exit /b %ERRORLEVEL%
-          "@ | Set-Content -Path intune-source\install.cmd
-
-          # Silent uninstall via msiexec product code
-          @"
-          @echo off
-          for /f "tokens=*" %%i in ('wmic product where "Name='Klecks'" get IdentifyingNumber /value ^| find "="') do set %%i
-          if defined IdentifyingNumber (
-            msiexec /x %IdentifyingNumber% /qn /norestart
-          ) else (
-            msiexec /x "%~dp0$installerName" /qn /norestart
-          )
-          exit /b 0
-          "@ | Set-Content -Path intune-source\uninstall.cmd
-
-          # Intune detection: registry key written by the MSI
-          @"
-          `$keyPath = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
-          `$app = Get-ChildItem `$keyPath |`n            Get-ItemProperty |`n            Where-Object { `$_.DisplayName -like 'Klecks*' }
-          if (`$app) { Write-Host "Detected: `$(`$app.DisplayName) `$(`$app.DisplayVersion)"; exit 0 }
-          exit 1
-          "@ | Set-Content -Path intune-source\detect.ps1
+          # Copy the maintained Intune scripts into the package source
+          Copy-Item scripts\intune\install.ps1   -Destination intune-source\
+          Copy-Item scripts\intune\uninstall.ps1  -Destination intune-source\
+          Copy-Item scripts\intune\detect.ps1     -Destination intune-source\
 
           Write-Host "Intune source contents:"
           Get-ChildItem intune-source\
@@ -206,10 +183,10 @@ jobs:
       - name: Create .intunewin package
         shell: pwsh
         run: |
-          # Find the setup file (install.cmd)
+          # Find the setup file (install.ps1)
           .\IntuneWinAppUtil.exe `
             -c intune-source `
-            -s install.cmd `
+            -s install.ps1 `
             -o . `
             -q
 

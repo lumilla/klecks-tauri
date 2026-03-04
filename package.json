@@ -1,8 +1,9 @@
 {
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run lang:build && vite build",
+    "build": "node scripts/sync-version.js && npm run lang:build && vite build",
     "preview": "vite preview",
     "lang:add": "node src/languages/generate.js add",
     "lang:sync": "node src/languages/generate.js sync",
