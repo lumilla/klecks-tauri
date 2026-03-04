@@ -6,6 +6,13 @@
 
 $ErrorActionPreference = 'Stop'
 
+# MSI installation requires administrator privileges
+if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+        [Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    Write-Error 'This script must be run as Administrator.'
+    exit 1
+}
+
 $msi = Get-ChildItem -Path $PSScriptRoot -Filter '*.msi' | Select-Object -First 1
 
 if (-not $msi) {
@@ -18,5 +25,11 @@ Write-Host "Installing $($msi.Name) ..."
 $process = Start-Process -FilePath 'msiexec.exe' `
     -ArgumentList "/i `"$($msi.FullName)`" /qn /norestart" `
     -Wait -PassThru
+
+if ($process.ExitCode -eq 0) {
+    Write-Host 'Installation completed successfully.'
+} else {
+    Write-Error "msiexec exited with code $($process.ExitCode)."
+}
 
 exit $process.ExitCode
